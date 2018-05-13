@@ -2,5 +2,4 @@
 A collection of various devices being developed for the SiEPIC_PDK
 
 ## Devices
-* Adiabatic Taper (In Development)
- * [ ] Neff Calculation Component 
+* Adiabatic Taper (In Development) - Lacking Neff Calculation Component
