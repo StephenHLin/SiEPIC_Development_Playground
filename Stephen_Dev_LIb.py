@@ -68,20 +68,50 @@ class AdiabaticTaper(pya.PCellDeclarationHelper): #The class name is the name of
     wavelength = self.wavelength
     neff = self.neff
     
-    #Calculate thetam (theta min)
-    thetamin = alpha*wavelength/2/wo/neff
-    #Calculate the Taper Length
-    deltaw = (wmax/2.0)-(wo/2.0)
-    L = deltaw/(tan(thetamin))
+    #Calculate neff (WIP)
     
-    xarray = [0,0.5,0.5+L,L+1.0,L+1.0,0.5+L,0.5,0]
-    yarray = [-wmax/2.0,-wmax/2.0,-wo/2.0,-wo/2.0,wo/2.0,wo/2.0,wmax/2.0,wmax/2.0]
+    #Linear case to use as guidelines
+    #Calculate thetam (theta min)
+    #thetamin = alpha*wavelength/2/wo/neff
+    #Calculate the Taper Length
+    #deltaw = (wmax/2.0)-(wo/2.0)
+    #L = deltaw/(tan(thetamin))
+    
+    #Curved Taper
+    #calculate theta starting with the small wg at every 100nm in length until the width is that of the other wg
+    xArray=[0,0.5]
+    yArray=[wo/2.0,wo/2.0]
+    wc=yArray[-1] #current width
+    lc=xArray[-1] #current length
+    dl = 0.001 #stepsize
+    while wc<wmax/2.0:
+      theta=(alpha*wavelength/2/(wc*2.0)/neff)
+      dw=dl*tan(theta)
+      wc=wc+dw
+      lc=lc+dl
+      xArray.append(round(lc,4))
+      yArray.append(round(wc,4))
+    print (yArray)
+    print(xArray)
+    if yArray[-1]*2 != wmax:  
+      del yArray[-1] #reject final point 
+      yArray.append(wmax/2.0)
+    
+    
+    #mirror the half of the taper
+    xArray.extend(reversed(xArray))
+    for i in reversed(yArray):
+      yArray.append(-i)
         
-    dpts=[pya.DPoint(xarray[i], yarray[i]) for i in range(len(xarray))] #Make your values into double-points (dpts)
+    #xarray = [0,0.5,0.5+L,L+1.0,L+1.0,0.5+L,0.5,0]
+    #yarray = [-wmax/2.0,-wmax/2.0,-wo/2.0,-wo/2.0,wo/2.0,wo/2.0,wmax/2.0,wmax/2.0]
+        
+    dpts=[pya.DPoint(xArray[i], yArray[i]) for i in range(len(xArray))] #Make your values into double-points (dpts)
     dpolygon = DPolygon(dpts)#From your double-points, make it into a double-polygon    
     element = Polygon.from_dpoly(dpolygon*(1.0/dbu))#from your double polygon, convert into a non-double (klayout needs this)
     shapes(LayerSiN).insert(element)#insert your polygon (draw the polygon)
     
+    '''
     t = Trans(Trans.R0,0, 0)
     text = Text ("TaperLength:"+ str(round(L,3))+"um\n TaperAngle:"+str(round(thetamin,3)), t)
     shape = shapes(TextLayerN).insert(text)
@@ -100,7 +130,7 @@ class AdiabaticTaper(pya.PCellDeclarationHelper): #The class name is the name of
     text = Text ("pin2", Trans(Trans.R0, (L+1.0)/dbu,0))
     shape = shapes(LayerPinRecN).insert(text)
     shape.text_size = 0.4/dbu
-
+    '''
     print( "Drawn: Adiabatic Tapers." )
     
 
